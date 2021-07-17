@@ -3,6 +3,7 @@ import logging
 import math
 import os
 import random
+import test  # import test.py to get mAP after each epoch
 import time
 from pathlib import Path
 from warnings import warn
@@ -20,18 +21,21 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-import test  # import test.py to get mAP after each epoch
 #from models.yolo import Model
 from models.models import *
 from utils.autoanchor import check_anchors
 from utils.datasets import create_dataloader
-from utils.general import labels_to_class_weights, increment_path, labels_to_image_weights, init_seeds, \
-    fitness, fitness_p, fitness_r, fitness_ap50, fitness_ap, fitness_f, strip_optimizer, get_latest_run,\
-    check_dataset, check_file, check_git_status, check_img_size, print_mutation, set_logging
+from utils.general import (check_dataset, check_file, check_git_status,
+                           check_img_size, fitness, fitness_ap, fitness_ap50,
+                           fitness_f, fitness_p, fitness_r, get_latest_run,
+                           increment_path, init_seeds, labels_to_class_weights,
+                           labels_to_image_weights, print_mutation,
+                           set_logging, strip_optimizer)
 from utils.google_utils import attempt_download
 from utils.loss import compute_loss
-from utils.plots import plot_images, plot_labels, plot_results, plot_evolution
-from utils.torch_utils import ModelEMA, select_device, intersect_dicts, torch_distributed_zero_first
+from utils.plots import plot_evolution, plot_images, plot_labels, plot_results
+from utils.torch_utils import (ModelEMA, intersect_dicts, select_device,
+                               torch_distributed_zero_first)
 
 logger = logging.getLogger(__name__)
 
@@ -603,9 +607,10 @@ if __name__ == '__main__':
 
             # Constrain to limits
             for k, v in meta.items():
-                hyp[k] = max(hyp[k], v[1])  # lower limit
-                hyp[k] = min(hyp[k], v[2])  # upper limit
-                hyp[k] = round(hyp[k], 5)  # significant digits
+                if k != 'anchors':  # stop it crashing during evolve
+                    hyp[k] = max(hyp[k], v[1])  # lower limit
+                    hyp[k] = min(hyp[k], v[2])  # upper limit
+                    hyp[k] = round(hyp[k], 5)  # significant digits
 
             # Train mutation
             results = train(hyp.copy(), opt, device, wandb=wandb)

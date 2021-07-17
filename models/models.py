@@ -390,7 +390,7 @@ class YOLOLayer(nn.Module):
 
         elif ONNX_EXPORT:
             bs, _, ny, nx = p.shape
-            print('Yolo create grid: ', nx, ny)
+            # print('Yolo create grid: ', nx, ny)
             self.create_grids((nx, ny), p.device)  # number x, y grid points
         else:
             bs, _, ny, nx = p.shape  # bs, 255, 13, 13
